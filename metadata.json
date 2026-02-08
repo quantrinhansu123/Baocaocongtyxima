@@ -1,0 +1,5 @@
+{
+  "name": "AppSheet Production Dashboard",
+  "description": "A comprehensive production tracking dashboard connecting to AppSheet API to visualize Inputs, Pass, and NG metrics with filtering capabilities.",
+  "requestFramePermissions": []
+}
