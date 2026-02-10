@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FilterState } from '../types';
-import { Search, Calendar, RefreshCw, Users, Tag, FileText, Hash, Truck, ChevronDown, Check, UserCheck } from 'lucide-react';
+import { Search, Calendar, RefreshCw, Users, Tag, FileText, Hash, Truck, ChevronDown, Check, UserCheck, Menu, X } from 'lucide-react';
 
 interface FilterBarProps {
   filters: FilterState;
@@ -74,7 +74,7 @@ const MultiSelectDropdown = ({
       </button>
 
       {isOpen && (
-        <div className="absolute z-20 mt-1 w-full min-w-[200px] bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+        <div className="absolute z-20 mt-1 w-full min-w-[200px] max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
           {options.length > 0 ? (
             <div className="p-1">
               {options.map((option) => {
@@ -121,6 +121,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   uniqueDeliveryStatus,
   uniqueShiftLeaders
 }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const handleStringChange = (key: keyof FilterState, value: string) => {
     onFilterChange({ ...filters, [key]: value });
@@ -131,118 +132,133 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   };
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col gap-4">
-      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+    <div className="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-slate-200 mb-4 flex flex-col gap-3">
+      {/* Mobile Header with Toggle Button */}
+      <div className="flex items-center justify-between lg:hidden">
+        <h3 className="text-base font-semibold text-slate-800">Bộ lọc</h3>
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+        >
+          {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        </button>
+      </div>
+
+      {/* Date Filters - Always Visible */}
+      <div className="flex items-center gap-2 w-full">
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Calendar className="h-4 w-4 text-slate-400" />
+          </div>
+          <input
+            type="date"
+            className="pl-9 pr-3 py-1.5 border border-slate-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 block w-full outline-none transition-shadow"
+            value={filters.startDate}
+            onChange={(e) => handleStringChange('startDate', e.target.value)}
+            placeholder="Từ ngày"
+          />
+        </div>
+        <span className="text-slate-400 shrink-0">-</span>
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Calendar className="h-4 w-4 text-slate-400" />
+          </div>
+          <input
+            type="date"
+            className="pl-9 pr-3 py-1.5 border border-slate-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 block w-full outline-none transition-shadow"
+            value={filters.endDate}
+            onChange={(e) => handleStringChange('endDate', e.target.value)}
+            placeholder="Đến ngày"
+          />
+        </div>
+        {/* Refresh Button - Mobile */}
+        <button
+          onClick={onRefresh}
+          disabled={isLoading}
+          className={`flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 active:bg-red-800 shadow-md transition-all shrink-0 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+
+      {/* Filter Grid - Collapsible on Mobile */}
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full transition-all duration-300 ${isMobileMenuOpen ? 'block' : 'hidden lg:grid'}`}>
         
-        {/* Date Filters */}
-        <div className="flex items-center gap-2 w-full lg:w-auto shrink-0">
-          <div className="relative flex-1 lg:w-36">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Calendar className="h-4 w-4 text-slate-400" />
-            </div>
-            <input
-              type="date"
-              className="pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 block w-full outline-none transition-shadow"
-              value={filters.startDate}
-              onChange={(e) => handleStringChange('startDate', e.target.value)}
-              placeholder="Từ ngày"
-            />
+        {/* 1. Product Type Multi-Select */}
+        <MultiSelectDropdown 
+          label="Loại SP" 
+          icon={Tag}
+          options={uniqueProductTypes}
+          selectedValues={filters.productType}
+          onChange={(values) => handleArrayChange('productType', values)}
+        />
+
+        {/* 2. Customer Multi-Select */}
+        <MultiSelectDropdown 
+          label="Khách hàng" 
+          icon={Users}
+          options={uniqueCustomers}
+          selectedValues={filters.customer}
+          onChange={(values) => handleArrayChange('customer', values)}
+        />
+
+        {/* 3. Shift Leader Multi-Select */}
+        <MultiSelectDropdown 
+          label="Trưởng ca" 
+          icon={UserCheck}
+          options={uniqueShiftLeaders}
+          selectedValues={filters.shiftLeader}
+          onChange={(values) => handleArrayChange('shiftLeader', values)}
+        />
+
+        {/* 4. Delivery Status Multi-Select */}
+        <MultiSelectDropdown 
+          label="Trạng thái" 
+          icon={Truck}
+          options={uniqueDeliveryStatus}
+          selectedValues={filters.deliveryStatus}
+          onChange={(values) => handleArrayChange('deliveryStatus', values)}
+        />
+
+        {/* 5. Order Code Search */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Hash className="h-4 w-4 text-slate-400" />
           </div>
-          <span className="text-slate-400">-</span>
-          <div className="relative flex-1 lg:w-36">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Calendar className="h-4 w-4 text-slate-400" />
-            </div>
-            <input
-              type="date"
-              className="pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 block w-full outline-none transition-shadow"
-              value={filters.endDate}
-              onChange={(e) => handleStringChange('endDate', e.target.value)}
-              placeholder="Đến ngày"
-            />
-          </div>
+          <input
+            type="text"
+            className="pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 block w-full outline-none transition-shadow"
+            placeholder="Mã Đơn..."
+            value={filters.orderCode}
+            onChange={(e) => handleStringChange('orderCode', e.target.value)}
+          />
         </div>
 
-        {/* Filter Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full flex-1">
-          
-          {/* 1. Product Type Multi-Select */}
-          <MultiSelectDropdown 
-            label="Loại SP" 
-            icon={Tag}
-            options={uniqueProductTypes}
-            selectedValues={filters.productType}
-            onChange={(values) => handleArrayChange('productType', values)}
-          />
-
-          {/* 2. Customer Multi-Select */}
-          <MultiSelectDropdown 
-            label="Khách hàng" 
-            icon={Users}
-            options={uniqueCustomers}
-            selectedValues={filters.customer}
-            onChange={(values) => handleArrayChange('customer', values)}
-          />
-
-          {/* 3. Shift Leader Multi-Select (New) */}
-          <MultiSelectDropdown 
-            label="Trưởng ca" 
-            icon={UserCheck}
-            options={uniqueShiftLeaders}
-            selectedValues={filters.shiftLeader}
-            onChange={(values) => handleArrayChange('shiftLeader', values)}
-          />
-
-          {/* 4. Delivery Status Multi-Select (New) */}
-          <MultiSelectDropdown 
-            label="Trạng thái" 
-            icon={Truck}
-            options={uniqueDeliveryStatus}
-            selectedValues={filters.deliveryStatus}
-            onChange={(values) => handleArrayChange('deliveryStatus', values)}
-          />
-
-          {/* 5. Order Code Search */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Hash className="h-4 w-4 text-slate-400" />
-            </div>
-            <input
-              type="text"
-              className="pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 block w-full outline-none transition-shadow"
-              placeholder="Mã Đơn..."
-              value={filters.orderCode}
-              onChange={(e) => handleStringChange('orderCode', e.target.value)}
-            />
+        {/* 6. Order Name Search */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <FileText className="h-4 w-4 text-slate-400" />
           </div>
-
-          {/* 6. Order Name Search */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FileText className="h-4 w-4 text-slate-400" />
-            </div>
-            <input
-              type="text"
-              className="pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 block w-full outline-none transition-shadow"
-              placeholder="Tên đơn..."
-              value={filters.orderName}
-              onChange={(e) => handleStringChange('orderName', e.target.value)}
-            />
-          </div>
+          <input
+            type="text"
+            className="pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 block w-full outline-none transition-shadow"
+            placeholder="Tên đơn..."
+            value={filters.orderName}
+            onChange={(e) => handleStringChange('orderName', e.target.value)}
+          />
         </div>
+      </div>
 
-        {/* Refresh Button */}
-        <div>
-           <button
-            onClick={onRefresh}
-            disabled={isLoading}
-            className={`flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 active:bg-red-800 shadow-md transition-all w-full lg:w-auto min-w-[100px] ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            <span className="hidden lg:inline">Làm mới</span>
-            <span className="lg:hidden">Làm mới</span>
-          </button>
-        </div>
+      {/* Refresh Button - Desktop */}
+      <div className="hidden lg:flex justify-end">
+        <button
+          onClick={onRefresh}
+          disabled={isLoading}
+          className={`flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 active:bg-red-800 shadow-md transition-all min-w-[100px] ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          <span>Làm mới</span>
+        </button>
       </div>
     </div>
   );

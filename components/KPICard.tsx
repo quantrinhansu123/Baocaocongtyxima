@@ -25,15 +25,15 @@ const iconBgMap = {
 
 export const KPICard: React.FC<KPICardProps> = ({ title, value, subText, icon: Icon, color }) => {
   return (
-    <div className={`p-6 rounded-xl border shadow-sm transition-all duration-200 hover:shadow-md ${colorMap[color]}`}>
+    <div className={`p-4 rounded-lg border shadow-sm transition-all duration-200 hover:shadow-md ${colorMap[color]}`}>
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold opacity-70 mb-1 uppercase tracking-wider">{title}</p>
-          <h3 className="text-3xl font-bold">{value}</h3>
-          {subText && <p className="text-xs mt-2 font-medium opacity-80">{subText}</p>}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold opacity-70 mb-1 uppercase tracking-wider">{title}</p>
+          <h3 className="text-2xl font-bold">{value}</h3>
+          {subText && <p className="text-xs mt-1.5 font-medium opacity-80 truncate">{subText}</p>}
         </div>
-        <div className={`p-3 rounded-lg ${iconBgMap[color]}`}>
-          <Icon className="w-6 h-6" />
+        <div className={`p-2 rounded-lg shrink-0 ml-2 ${iconBgMap[color]}`}>
+          <Icon className="w-5 h-5" />
         </div>
       </div>
     </div>
